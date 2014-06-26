@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace matrix_method2
+namespace Antropod.MatrixMethod
 {
     static class Program
     {

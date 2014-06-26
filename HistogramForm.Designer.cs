@@ -1,4 +1,4 @@
-﻿namespace matrix_method2
+﻿namespace Antropod.MatrixMethod
 {
     partial class HistogramForm
     {

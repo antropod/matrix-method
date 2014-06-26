@@ -8,64 +8,58 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Antropod.DataGridViewVirtual;
+using Antropod;
 using System.IO;
 using System.Globalization;
-using Mathos.Parser;
 
-namespace matrix_method2
+namespace Antropod.MatrixMethod
 {
     public partial class FinalMatrixForm : Form
     {
         private HistogramForm histogramForm;
 
-        private Final subject;
+        private ApplicationData appData;
+
+        //private Final subject;
         private double[,] matrix;
-        private double[] calculatedData;
 
         private const string FILE_NAME = "program.dat";
         private const string DIALOG_FILTER = "Файлы MX|*.mx";
         private EditCombinedForm editCombinedForm;
         private TwoDimensionalArrayView dataView;
-        private NamedIndexList indexList;
-
-        public Final Subject
-        {
-            get { return subject; }
-            set
-            {
-                subject = value;
-
-                listBox1.Items.Clear();
-                foreach (var part in Subject.parts)
-                    listBox1.Items.Add(part.name);
-
-                dataView.Data = null;
-                matrix = null;
-            }
-        }
 
         public FinalMatrixForm()
         {
             InitializeComponent();
             dataView = new TwoDimensionalArrayView(dataGridView2, null);
-
-            Restore();
             editCombinedForm = new EditCombinedForm();
-
-            indexList = new NamedIndexList();
-            indexList.names = new string[]{"R1", "R2", "R3", "C1"};
-            indexList.indices = new int[] { 0, 0, 0, 1 };
-
             histogramForm = new HistogramForm();
+
+            appData = ApplicationData.LoadFromFile(FILE_NAME);
+            appData.PropertyChanged += appData_PropertyChanged;
+            appData.NotifyChanged("");
+        }
+
+        void appData_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            listBox1.Items.Clear();
+            foreach (var part in appData.final.parts)
+                listBox1.Items.Add(part.name);
+
+            dataView.Data = null;
+            matrix = null;
+            propertyGrid1.SelectedObject = appData.stat;
         }
 
         public void MakeMatrix()
         {
             dataView.Data = null;
-            matrix = Subject.UpdateMatrix(indexList.indices);
+            var indices = appData.final.maket.ComponentIndices().ToArray();
+            matrix = appData.final.UpdateMatrix(indices);
             dataView.Data = matrix;
-            for (int i = 0; i < indexList.names.Length; ++i)
-                dataGridView2.Columns[i].HeaderText = indexList.names[i];
+            var names = appData.final.maket.ComponentNames().ToArray();
+            for (int i = 0; i < names.Length; ++i)
+                dataGridView2.Columns[i].HeaderText = names[i];
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -82,21 +76,7 @@ namespace matrix_method2
 
         private void Save()
         {
-            Utility.Serialize(Subject, FILE_NAME);
-        }
-
-        private bool Restore()
-        {
-            try
-            {
-                Subject = (Final)Utility.Deserialize(FILE_NAME);
-                return true;
-            }
-            catch(FileNotFoundException)
-            {
-                Subject = new Final();
-                return false;
-            }
+            Utility.Serialize(appData, FILE_NAME);
         }
 
         private void FinalMatrixForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -110,7 +90,7 @@ namespace matrix_method2
             {
                 int index = listBox1.SelectedIndex;
                 if (index == -1) throw new InterfaceException("Выберите компонент");
-                var part = Subject.parts[index];
+                var part = appData.final.parts[index];
                 editCombinedForm.ClearControls();
                 editCombinedForm.Subject = part;
                 var result = editCombinedForm.ShowDialog();
@@ -131,7 +111,7 @@ namespace matrix_method2
                 dialog.FilterIndex = 1;
                 dialog.RestoreDirectory = true;
                 if (dialog.ShowDialog() != DialogResult.OK) return;
-                Utility.Serialize(Subject, dialog.FileName);
+                Utility.Serialize(appData, dialog.FileName);
             }
             catch(Exception exc)
             {
@@ -143,14 +123,16 @@ namespace matrix_method2
         {
             try
             {
-                var dialog = new OpenFileDialog();
-                dialog.Filter = DIALOG_FILTER;
-                dialog.FilterIndex = 1;
-                dialog.RestoreDirectory = true;
-                if (dialog.ShowDialog() != DialogResult.OK) return;
-                var data = (Final)Utility.Deserialize(dialog.FileName);
-                if (data == null) throw new InterfaceException("Не удалось загрузить файл");
-                Subject = data;
+                using(var dialog = new OpenFileDialog())
+                {
+                    dialog.Filter = DIALOG_FILTER;
+                    dialog.FilterIndex = 1;
+                    dialog.RestoreDirectory = true;
+                    if (dialog.ShowDialog() != DialogResult.OK) return;
+                    appData = ApplicationData.LoadFromFile(dialog.FileName);
+                    appData.PropertyChanged += appData_PropertyChanged;
+                    appData.NotifyChanged("");
+                }
             }
             catch (Exception exc)
             {
@@ -163,7 +145,11 @@ namespace matrix_method2
             var result = MessageBox.Show("Вы уверены?", "Новый расчет",
                 MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result != DialogResult.Yes) return;
-            Subject = new Final();
+
+            var editMaketForm = new EditMaketForm();
+            var maket = Maket.CreateDefault();
+            maket = editMaketForm.EditSubject(maket);
+            appData.final = new Final(maket);
         }
 
         private void button6_Click(object sender, EventArgs e)
@@ -171,30 +157,13 @@ namespace matrix_method2
             try
             {
                 MakeMatrix();
-
                 if (matrix == null) return;
-                var newMatrix = new double[matrix.GetLength(0), matrix.GetLength(1) + 1];
-                calculatedData = new double[matrix.GetLength(0)];
+                appData.stat.Recalculate(matrix);
+                propertyGrid1.Refresh();
 
-                for (int i = 0; i < matrix.GetLength(0); ++i)
-                    for (int j = 0; j < matrix.GetLength(1); ++j)
-                        newMatrix[i, j] = matrix[i, j];
-
-                var parser = new MathParser();
-                parser.CULTURE_INFO = CultureInfo.CurrentCulture;
-                var expression = textBox1.Text;
-                for (int i = 0; i < matrix.GetLength(0); ++i)
-                {
-                    for (int j = 0; j < indexList.names.Length; ++j )
-                    {
-                        parser.LocalVariables[indexList.names[j]] = (decimal)matrix[i, j];
-                    }
-                    var result = (double)parser.Parse(expression);
-                    newMatrix[i, newMatrix.GetLength(1) - 1] = result;
-                    calculatedData[i] = result;
-                }
-
-                dataView.Data = newMatrix;
+                dataView.Data = appData.stat.newMatrix;
+                //dataView.Data = newMatrix;
+                //dataGridView2.Columns[dataGridView2.ColumnCount - 2].HeaderText = "Функция";
             }
             catch(Exception exc)
             {
@@ -206,14 +175,24 @@ namespace matrix_method2
         {
             try
             {
-                histogramForm.SetData(calculatedData, (int)numericUpDown1.Value);
+                histogramForm.SetData(appData.stat.calculatedData, (int)numericUpDown1.Value);
                 histogramForm.Show();
                 histogramForm.Focus();
             }
-            catch(InterfaceException exc)
+            catch (InterfaceException exc)
             {
                 Utility.ExceptionMessageBox(exc);
             }
+
+        }
+
+        private void numericUpDown1_ValueChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label1_Click(object sender, EventArgs e)
+        {
 
         }
 

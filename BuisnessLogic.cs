@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MathNet.Numerics.Distributions;
 
-namespace matrix_method2
+namespace Antropod.MatrixMethod
 {
     [Serializable]
     public abstract class Quant
@@ -59,7 +59,7 @@ namespace matrix_method2
     public class UniformQuant : Quant
     {
         protected double _low = 0, _high = 0;
-        protected int _number = 24;
+        protected int _number = 12;
 
         public UniformQuant()
         {
@@ -335,14 +335,17 @@ namespace matrix_method2
     public class Final
     {
         public Combined[] parts;
+        public Maket maket { get; set; }
 
-        public Final()
+        public Final(Maket maket)
         {
-            parts = new Combined[]
+            var partsList = new List<Combined>();
+            this.maket = maket;
+            foreach(var partName in maket.TypeNames())
             {
-                new Combined("Резистор"),
-                new Combined("Конденсатор")
-            };
+                partsList.Add(new Combined(partName));
+            }
+            parts = partsList.ToArray();
         }
 
         public double[,] UpdateMatrix(int[] indices)

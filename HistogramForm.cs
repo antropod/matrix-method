@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace matrix_method2
+namespace Antropod.MatrixMethod
 {
     public partial class HistogramForm : Form
     {

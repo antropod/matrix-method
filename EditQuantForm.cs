@@ -10,7 +10,7 @@ using System.Windows.Forms;
 using System.Diagnostics;
 using Antropod.DataGridViewVirtual;
 
-namespace matrix_method2
+namespace Antropod.MatrixMethod
 {
     public partial class EditQuantForm : Form
     {

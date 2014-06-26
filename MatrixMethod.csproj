@@ -7,10 +7,11 @@
     <ProjectGuid>{0FFE689F-F2C7-48CD-873B-221EDE482232}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>matrix_method2</RootNamespace>
-    <AssemblyName>matrix_method2</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <RootNamespace>MatrixMethod</RootNamespace>
+    <AssemblyName>MatrixMethod</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -52,6 +53,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationData.cs" />
     <Compile Include="BuisnessLogic.cs" />
     <Compile Include="EditCombinedForm.cs">
       <SubType>Form</SubType>
@@ -62,7 +64,9 @@
     <Compile Include="EditMaketForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="EditMaketForm.Designer.cs" />
+    <Compile Include="EditMaketForm.Designer.cs">
+      <DependentUpon>EditMaketForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="EditQuantForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -81,13 +85,16 @@
     <Compile Include="HistogramForm.Designer.cs">
       <DependentUpon>HistogramForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="MathParser.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Stat.cs" />
     <Compile Include="Utility.cs" />
     <Compile Include="VirtualHandler2.cs" />
     <EmbeddedResource Include="EditCombinedForm.resx">
       <DependentUpon>EditCombinedForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EditMaketForm.resx">
+      <DependentUpon>EditMaketForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="EditQuantForm.resx">
       <DependentUpon>EditQuantForm.cs</DependentUpon>
@@ -106,6 +113,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
@@ -120,6 +128,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MathParser\MathParser.csproj">
+      <Project>{ba7f9e5d-2ecd-4ae4-b52e-bea4fc043597}</Project>
+      <Name>MathParser</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
